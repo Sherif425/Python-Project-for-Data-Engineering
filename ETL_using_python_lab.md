@@ -85,3 +85,67 @@ b. Unzip the downloaded file.
                 dataframe = pd.concat([dataframe, pd.DataFrame([{"name":name, "height":height, "weight":weight}])], ignore_index=True) 
                 return dataframe 
 
+    Now you need a function to identify which function to call on basis of the filetype of the data file. To call the relevant function, write a function extract, which uses the glob library to identify the filetype. This can be done as follows:
+
+        def extract(): 
+             extracted_data = pd.DataFrame(columns=['name','height','weight']) # create an empty data frame to hold extracted data 
+     
+            # process all csv files, except the target file
+            for csvfile in glob.glob("*.csv"): 
+                if csvfile != target_file:  # check if the file is not the target file
+                    extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_csv(csvfile))], ignore_index=True) 
+                
+            # process all json files 
+            for jsonfile in glob.glob("*.json"): 
+                extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_json(jsonfile))], ignore_index=True) 
+            
+            # process all xml files 
+            for xmlfile in glob.glob("*.xml"): 
+                extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_xml(xmlfile))], ignore_index=True) 
+                
+            return extracted_data 
+
+
+## Task 2 - Transformation
+
+    The height in the extracted data is in inches, and the weight is in pounds. However, for your application, the height is required to be in meters, and the weight is required to be in kilograms, rounded to two decimal places. Therefore, you need to write the function to perform the unit conversion for the two parameters.
+
+    The name of this function will be transform(), and it will receive the extracted dataframe as the input. Since the dataframe is in the form of a dictionary with three keys, "name", "height", and "weight", each of them having a list of values, you can apply the transform function on the entire list at one go.
+
+    The function can be written as follows:
+
+    def transform(data): 
+        '''Convert inches to meters and round off to two decimals 
+         inch is 0.0254 meters '''
+        data['height'] = round(data.height * 0.0254,2) 
+ 
+        '''Convert pounds to kilograms and round off to two decimals 
+         pound is 0.45359237 kilograms '''
+        data['weight'] = round(data.weight * 0.45359237,2) 
+    
+        return data 
+
+    The output of this function will now be a dataframe where the "height" and "weight" parameters will be modified to the required format.
+
+
+## Task 3 - Loading and Logging
+
+    You need to load the transformed data to a CSV file that you can use to load to a database as per requirement.
+
+    To load the data, you need a function load_data() that accepts the transformed data as a dataframe and the target_file path. You need to use the to_csv attribute of the dataframe in the function as follows:
+
+        def load_data(target_file, transformed_data): 
+            transformed_data.to_csv(target_file) 
+    
+    Finally, you need to implement the logging operation to record the progress of the different operations. For this operation, you need to record a message, along with its timestamp, in the log_file.
+
+    To record the message, you need to implement a function log_progress() that accepts the log message as the argument. The function captures the current date and time using the datetime function from the datetime library. 
+    
+    The use of this function requires the definition of a date-time format, and you need to convert the timestamp to a string format using the strftime attribute. The following code creates the log operation:
+
+        def log_progress(message): 
+            timestamp_format = '%Y-%h-%d-%H:%M:%S' # Year-Monthname-Day-Hour-Minute-Second 
+            now = datetime.now() # get current timestamp 
+            timestamp = now.strftime(timestamp_format) 
+            with open(log_file,"a") as f: 
+                f.write(timestamp + ',' + message + '\n') 
